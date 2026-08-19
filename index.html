@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Свободный Слог: Квиз</title>
+  <!-- Подключение VK Bridge -->
+  <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+  <style>
+    :root {
+      --vk-bg: #edeef0;
+      --vk-card: #ffffff;
+      --vk-primary: #2d81e0;
+      --vk-primary-hover: #266dc2;
+      --vk-text: #000000;
+      --vk-subtext: #818c99;
+      --vk-correct: #4bb34b;
+      --vk-wrong: #e64646;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif; }
+    body { background-color: var(--vk-bg); color: var(--vk-text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 16px; }
+    .card { background: var(--vk-card); width: 100%; max-width: 420px; border-radius: 16px; padding: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); text-align: center; }
+    h1 { font-size: 20px; margin-bottom: 8px; }
+    .subtitle { color: var(--vk-subtext); font-size: 14px; margin-bottom: 20px; }
+    .quote-box { background: #f5f6f8; border-left: 4px solid var(--vk-primary); padding: 16px; border-radius: 8px; font-style: italic; font-size: 16px; line-height: 1.5; margin-bottom: 20px; min-height: 90px; display: flex; align-items: center; justify-content: center; }
+    .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .btn { background: #f0f2f5; border: 1px solid #e1e3e6; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; transition: 0.2s; color: var(--vk-text); width: 100%; }
+    .btn:active { transform: scale(0.98); }
+    .btn.primary { background: var(--vk-primary); color: #fff; border: none; }
+    .btn.correct { background: var(--vk-correct); color: #fff; border-color: var(--vk-correct); }
+    .btn.wrong { background: var(--vk-wrong); color: #fff; border-color: var(--vk-wrong); }
+    .progress { font-size: 13px; color: var(--vk-subtext); margin-bottom: 12px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="card" id="start-screen">
+    <h1>Свободный Слог: Квиз</h1>
+    <p class="subtitle">Проверьте, насколько хорошо вы знаете русскую и мировую классику</p>
+    <div class="quote-box">«Угадайте автора по одной строчке стихотворения»</div>
+    <button class="btn primary" onclick="startGame()">Начать игру</button>
+  </div>
+
+  <div class="card hidden" id="quiz-screen">
+    <div class="progress" id="progress-text">Вопрос 1 из 5</div>
+    <div class="quote-box" id="question-text">Загрузка...</div>
+    <div class="options-grid" id="options-container"></div>
+  </div>
+
+  <div class="card hidden" id="result-screen">
+    <h1>Результат</h1>
+    <p class="subtitle" id="result-title">Отличная работа!</p>
+    <div class="quote-box" id="result-score" style="font-style: normal; font-weight: bold; font-size: 22px;">0 / 5</div>
+    <button class="btn primary" style="margin-bottom: 10px;" onclick="startGame()">Сыграть еще раз</button>
+    <button class="btn" onclick="shareStory()">Поделиться в VK</button>
+  </div>
+
+  <script>
+    // Инициализация VK Mini App
+    vkBridge.send('VKWebAppInit');
+
+    const questions = [
+      {
+        quote: "Послушайте! Ведь, если звезды зажигают — значит — это кому-нибудь нужно?",
+        options: ["В. Маяковский", "С. Есенин", "А. Блок", "Б. Пастернак"],
+        correct: 0
+      },
+      {
+        quote: "Я помню чудное мгновенье: передо мной явилась ты...",
+        options: ["М. Лермонтов", "А. Пушкин", "Ф. Тютчев", "А. Фет"],
+        correct: 1
+      },
+      {
+        quote: "Не жалею, не зову, не плачу, все пройдет, как с белых яблонь дым...",
+        options: ["И. Бродский", "Н. Гумилев", "С. Есенин", "О. Мандельштам"],
+        correct: 2
+      },
+      {
+        quote: "Ночь, улица, фонарь, аптека, бессмысленный и тусклый свет...",
+        options: ["А. Блок", "В. Маяковский", "А. Ахматова", "М. Цветаева"],
+        correct: 0
+      },
+      {
+        quote: "Не выходи из комнаты, не совершай ошибку...",
+        options: ["Е. Евтушенко", "И. Бродский", "Р. Рождественский", "Б. Окуджава"],
+        correct: 1
+      }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+
+    function startGame() {
+      currentQuestion = 0;
+      score = 0;
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('result-screen').classList.add('hidden');
+      document.getElementById('quiz-screen').classList.remove('hidden');
+      showQuestion();
+    }
+
+    function showQuestion() {
+      const q = questions[currentQuestion];
+      document.getElementById('progress-text').innerText = `Вопрос ${currentQuestion + 1} из ${questions.length}`;
+      document.getElementById('question-text').innerText = `«${q.quote}»`;
+      
+      const container = document.getElementById('options-container');
+      container.innerHTML = '';
+
+      q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.innerText = opt;
+        btn.onclick = () => selectAnswer(btn, idx === q.correct);
+        container.appendChild(btn);
+      });
+    }
+
+    function selectAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('#options-container .btn');
+      allButtons.forEach(b => b.disabled = true);
+
+      if (isCorrect) {
+        btn.classList.add('correct');
+        score++;
+      } else {
+        btn.classList.add('wrong');
+        allButtons[questions[currentQuestion].correct].classList.add('correct');
+      }
+
+      setTimeout(() => {
+        currentQuestion++;
+        if (currentQuestion < questions.length) {
+          showQuestion();
+        } else {
+          showResult();
+        }
+      }, 1000);
+    }
+
+    function showResult() {
+      document.getElementById('quiz-screen').classList.add('hidden');
+      document.getElementById('result-screen').classList.remove('hidden');
+      document.getElementById('result-score').innerText = `${score} из ${questions.length}`;
+
+      let title = "Знаток литературы!";
+      if (score === questions.length) title = "Абсолютный триумф! Профессор поэзии 🎓";
+      else if (score <= 2) title = "Есть куда расти! Пора перечитать классику 📖";
+      
+      document.getElementById('result-title').innerText = title;
+    }
+
+    function shareStory() {
+      // Публикация на стену через VK Bridge
+      vkBridge.send('VKWebAppShowWallPostBox', {
+        message: `Я набрал ${score} из ${questions.length} в игре «Свободный Слог: Квиз»! Сможешь превзойти мой результат?`
+      }).catch(err => console.log(err));
+    }
+  </script>
+</body>
+</html>
