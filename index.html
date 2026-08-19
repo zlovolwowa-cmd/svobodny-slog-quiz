@@ -4,14 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Свободный Слог: Квиз</title>
-  <!-- Подключение VK Bridge -->
   <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
   <style>
     :root {
       --vk-bg: #edeef0;
       --vk-card: #ffffff;
       --vk-primary: #2d81e0;
-      --vk-primary-hover: #266dc2;
       --vk-text: #000000;
       --vk-subtext: #818c99;
       --vk-correct: #4bb34b;
@@ -37,8 +35,8 @@
 
   <div class="card" id="start-screen">
     <h1>Свободный Слог: Квиз</h1>
-    <p class="subtitle">Проверьте, насколько хорошо вы знаете русскую и мировую классику</p>
-    <div class="quote-box">«Угадайте автора по одной строчке стихотворения»</div>
+    <p class="subtitle">Угадайте автора стихотворения по одной строке!</p>
+    <div class="quote-box">В каждом раунде — новые случайные цитаты великих поэтов.</div>
     <button class="btn primary" onclick="startGame()">Начать игру</button>
   </div>
 
@@ -49,18 +47,18 @@
   </div>
 
   <div class="card hidden" id="result-screen">
-    <h1>Результат</h1>
+    <h1>Результат раунда</h1>
     <p class="subtitle" id="result-title">Отличная работа!</p>
     <div class="quote-box" id="result-score" style="font-style: normal; font-weight: bold; font-size: 22px;">0 / 5</div>
-    <button class="btn primary" style="margin-bottom: 10px;" onclick="startGame()">Сыграть еще раз</button>
+    <button class="btn primary" style="margin-bottom: 10px;" onclick="startGame()">Новый раунд (другие вопросы)</button>
     <button class="btn" onclick="shareStory()">Поделиться в VK</button>
   </div>
 
   <script>
-    // Инициализация VK Mini App
     vkBridge.send('VKWebAppInit');
 
-    const questions = [
+    // Большая база вопросов
+    const QUESTION_BANK = [
       {
         quote: "Послушайте! Ведь, если звезды зажигают — значит — это кому-нибудь нужно?",
         options: ["В. Маяковский", "С. Есенин", "А. Блок", "Б. Пастернак"],
@@ -85,15 +83,80 @@
         quote: "Не выходи из комнаты, не совершай ошибку...",
         options: ["Е. Евтушенко", "И. Бродский", "Р. Рождественский", "Б. Окуджава"],
         correct: 1
+      },
+      {
+        quote: "Белеет парус одинокой в тумане моря голубом!..",
+        options: ["А. Пушкин", "М. Лермонтов", "Н. Некрасов", "В. Жуковский"],
+        correct: 1
+      },
+      {
+        quote: "Мне нравится, что вы больны не мной, мне нравится, что я больна не вами...",
+        options: ["М. Цветаева", "А. Ахматова", "Б. Ахмадулина", "З. Гиппиус"],
+        correct: 0
+      },
+      {
+        quote: "Сжала руки под темной вуалью... «Отчего ты сегодня бледна?»",
+        options: ["М. Цветаева", "А. Ахматова", "Т. Толстая", "Н. Тэффи"],
+        correct: 1
+      },
+      {
+        quote: "Февраль. Достать чернил и плакать! Писать о феврале навзрыд...",
+        options: ["Б. Пастернак", "О. Мандельштам", "А. Блок", "И. Анненский"],
+        correct: 0
+      },
+      {
+        quote: "Умом Россию не понять, аршином общим не измерить...",
+        options: ["А. Фет", "Ф. Тютчев", "Н. Некрасов", "А. Толстой"],
+        correct: 1
+      },
+      {
+        quote: "Я научилась просто, мудро жить, смотреть на небо и молиться Богу...",
+        options: ["А. Ахматова", "М. Цветаева", "Б. Ахмадулина", "Ю. Друнина"],
+        correct: 0
+      },
+      {
+        quote: "Дай, Джим, на счастье лапу мне, такую лапу не видал я сроду...",
+        options: ["В. Маяковский", "С. Есенин", "Э. Асадов", "К. Симонов"],
+        correct: 1
+      },
+      {
+        quote: "Шепот, робкое дыханье, трели соловья...",
+        options: ["А. Фет", "Ф. Тютчев", "А. Майков", "А. Пушкин"],
+        correct: 0
+      },
+      {
+        quote: "Жди меня, и я вернусь. Только очень жди...",
+        options: ["А. Твардовский", "К. Симонов", "М. Джалиль", "С. Гудзенко"],
+        correct: 1
+      },
+      {
+        quote: "Во всем мне хочется дойти до самой сути...",
+        options: ["Б. Пастернак", "И. Бродский", "В. Высоцкий", "Е. Евтушенко"],
+        correct: 0
       }
     ];
 
+    const QUESTIONS_PER_GAME = 5;
+    let gameQuestions = [];
     let currentQuestion = 0;
     let score = 0;
 
+    // Функция перемешивания массива (Фишер — Йетс)
+    function shuffle(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
     function startGame() {
+      // Перемешиваем базу и берем случайные 5 вопросов
+      gameQuestions = shuffle(QUESTION_BANK).slice(0, QUESTIONS_PER_GAME);
       currentQuestion = 0;
       score = 0;
+
       document.getElementById('start-screen').classList.add('hidden');
       document.getElementById('result-screen').classList.add('hidden');
       document.getElementById('quiz-screen').classList.remove('hidden');
@@ -101,8 +164,8 @@
     }
 
     function showQuestion() {
-      const q = questions[currentQuestion];
-      document.getElementById('progress-text').innerText = `Вопрос ${currentQuestion + 1} из ${questions.length}`;
+      const q = gameQuestions[currentQuestion];
+      document.getElementById('progress-text').innerText = `Вопрос ${currentQuestion + 1} из ${QUESTIONS_PER_GAME}`;
       document.getElementById('question-text').innerText = `«${q.quote}»`;
       
       const container = document.getElementById('options-container');
@@ -126,12 +189,12 @@
         score++;
       } else {
         btn.classList.add('wrong');
-        allButtons[questions[currentQuestion].correct].classList.add('correct');
+        allButtons[gameQuestions[currentQuestion].correct].classList.add('correct');
       }
 
       setTimeout(() => {
         currentQuestion++;
-        if (currentQuestion < questions.length) {
+        if (currentQuestion < QUESTIONS_PER_GAME) {
           showQuestion();
         } else {
           showResult();
@@ -142,19 +205,18 @@
     function showResult() {
       document.getElementById('quiz-screen').classList.add('hidden');
       document.getElementById('result-screen').classList.remove('hidden');
-      document.getElementById('result-score').innerText = `${score} из ${questions.length}`;
+      document.getElementById('result-score').innerText = `${score} из ${QUESTIONS_PER_GAME}`;
 
       let title = "Знаток литературы!";
-      if (score === questions.length) title = "Абсолютный триумф! Профессор поэзии 🎓";
+      if (score === QUESTIONS_PER_GAME) title = "Абсолютный триумф! Профессор поэзии 🎓";
       else if (score <= 2) title = "Есть куда расти! Пора перечитать классику 📖";
       
       document.getElementById('result-title').innerText = title;
     }
 
     function shareStory() {
-      // Публикация на стену через VK Bridge
       vkBridge.send('VKWebAppShowWallPostBox', {
-        message: `Я набрал ${score} из ${questions.length} в игре «Свободный Слог: Квиз»! Сможешь превзойти мой результат?`
+        message: `Я набрал ${score} из ${QUESTIONS_PER_GAME} в игре «Свободный Слог: Квиз»! Сможешь превзойти мой результат?`
       }).catch(err => console.log(err));
     }
   </script>
