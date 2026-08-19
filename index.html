@@ -4,48 +4,130 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Свободный Слог: Квиз</title>
+  <!-- Подключение VK Bridge -->
   <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
   <style>
     :root {
       --vk-bg: #edeef0;
       --vk-card: #ffffff;
       --vk-primary: #2d81e0;
+      --vk-primary-hover: #266dc2;
       --vk-text: #000000;
       --vk-subtext: #818c99;
       --vk-correct: #4bb34b;
       --vk-wrong: #e64646;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif; }
-    body { background-color: var(--vk-bg); color: var(--vk-text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 16px; }
-    .card { background: var(--vk-card); width: 100%; max-width: 420px; border-radius: 16px; padding: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); text-align: center; }
-    h1 { font-size: 20px; margin-bottom: 8px; }
-    .subtitle { color: var(--vk-subtext); font-size: 14px; margin-bottom: 20px; }
-    .quote-box { background: #f5f6f8; border-left: 4px solid var(--vk-primary); padding: 16px; border-radius: 8px; font-style: italic; font-size: 16px; line-height: 1.5; margin-bottom: 20px; min-height: 90px; display: flex; align-items: center; justify-content: center; }
-    .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-    .btn { background: #f0f2f5; border: 1px solid #e1e3e6; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; transition: 0.2s; color: var(--vk-text); width: 100%; }
-    .btn:active { transform: scale(0.98); }
-    .btn.primary { background: var(--vk-primary); color: #fff; border: none; }
-    .btn.correct { background: var(--vk-correct); color: #fff; border-color: var(--vk-correct); }
-    .btn.wrong { background: var(--vk-wrong); color: #fff; border-color: var(--vk-wrong); }
-    .progress { font-size: 13px; color: var(--vk-subtext); margin-bottom: 12px; }
-    .hidden { display: none; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif; 
+    }
+    body { 
+      background-color: var(--vk-bg); 
+      color: var(--vk-text); 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      min-height: 100vh; 
+      padding: 16px; 
+    }
+    .card { 
+      background: var(--vk-card); 
+      width: 100%; 
+      max-width: 420px; 
+      border-radius: 16px; 
+      padding: 24px; 
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08); 
+      text-align: center; 
+    }
+    h1 { 
+      font-size: 20px; 
+      margin-bottom: 8px; 
+    }
+    .subtitle { 
+      color: var(--vk-subtext); 
+      font-size: 14px; 
+      margin-bottom: 20px; 
+    }
+    .quote-box { 
+      background: #f5f6f8; 
+      border-left: 4px solid var(--vk-primary); 
+      padding: 16px; 
+      border-radius: 8px; 
+      font-style: italic; 
+      font-size: 16px; 
+      line-height: 1.5; 
+      margin-bottom: 20px; 
+      min-height: 90px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+    }
+    .options-grid { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 10px; 
+      margin-bottom: 20px; 
+    }
+    .btn { 
+      background: #f0f2f5; 
+      border: 1px solid #e1e3e6; 
+      padding: 14px; 
+      border-radius: 10px; 
+      font-size: 15px; 
+      font-weight: 500; 
+      cursor: pointer; 
+      transition: 0.2s; 
+      color: var(--vk-text); 
+      width: 100%; 
+    }
+    .btn:active { 
+      transform: scale(0.98); 
+    }
+    .btn.primary { 
+      background: var(--vk-primary); 
+      color: #fff; 
+      border: none; 
+    }
+    .btn.correct { 
+      background: var(--vk-correct); 
+      color: #fff; 
+      border-color: var(--vk-correct); 
+    }
+    .btn.wrong { 
+      background: var(--vk-wrong); 
+      color: #fff; 
+      border-color: var(--vk-wrong); 
+    }
+    .progress { 
+      font-size: 13px; 
+      color: var(--vk-subtext); 
+      margin-bottom: 12px; 
+    }
+    .hidden { 
+      display: none; 
+    }
   </style>
 </head>
 <body>
 
+  <!-- Начальный экран -->
   <div class="card" id="start-screen">
     <h1>Свободный Слог: Квиз</h1>
     <p class="subtitle">Угадайте автора стихотворения по одной строке!</p>
-    <div class="quote-box">В каждом раунде — новые случайные цитаты великих поэтов.</div>
+    <div class="quote-box">В каждом раунде — новые случайные цитаты поэтов.</div>
     <button class="btn primary" onclick="startGame()">Начать игру</button>
   </div>
 
+  <!-- Экран квиза -->
   <div class="card hidden" id="quiz-screen">
     <div class="progress" id="progress-text">Вопрос 1 из 5</div>
     <div class="quote-box" id="question-text">Загрузка...</div>
     <div class="options-grid" id="options-container"></div>
   </div>
 
+  <!-- Экран результатов -->
   <div class="card hidden" id="result-screen">
     <h1>Результат раунда</h1>
     <p class="subtitle" id="result-title">Отличная работа!</p>
@@ -55,6 +137,7 @@
   </div>
 
   <script>
+    // Инициализация моста VK
     vkBridge.send('VKWebAppInit');
 
     // Большая база вопросов
@@ -257,8 +340,9 @@
         quote: "Один поэт сказал: «Стихи не терпят фальши». Свободный слог ведет вперед и дальше!",
         options: ["Свободный Слог", "Литературный клуб", "Школа поэтов", "Современный ритм"],
         correct: 0
-      }
-            // Золотой век и романтизм
+      },
+
+      // Золотой век и романтизм
       {
         quote: "Скажи-ка, дядя, ведь не даром Москва, спаленная пожаром, французу отдана?",
         options: ["М. Лермонтов", "А. Пушкин", "Д. Давыдов", "В. Жуковский"],
@@ -295,7 +379,7 @@
         correct: 0
       },
       {
-        quote: " Silentium! Молчи, скрывайся и таи и чувства и мечты свои...",
+        quote: "Silentium! Молчи, скрывайся и таи и чувства и мечты свои...",
         options: ["Ф. Тютчев", "А. Фет", "В. Брюсов", "И. Анненский"],
         correct: 0
       },
@@ -514,8 +598,6 @@
         options: ["Свободный Слог", "Литературный клуб", "Школа мастеров", "Поэтический круг"],
         correct: 0
       }
-
-
     ];
 
     const QUESTIONS_PER_GAME = 5;
@@ -523,7 +605,7 @@
     let currentQuestion = 0;
     let score = 0;
 
-    // Функция перемешивания массива (Фишер — Йетс)
+    // Алгоритм случайного перемешивания Фишера — Йетса
     function shuffle(array) {
       const arr = [...array];
       for (let i = arr.length - 1; i > 0; i--) {
@@ -534,8 +616,19 @@
     }
 
     function startGame() {
-      // Перемешиваем базу и берем случайные 5 вопросов
-      gameQuestions = shuffle(QUESTION_BANK).slice(0, QUESTIONS_PER_GAME);
+      // Выбираем 5 случайных вопросов и случайно перемешиваем варианты ответов
+      const shuffledQuestions = shuffle(QUESTION_BANK).slice(0, QUESTIONS_PER_GAME);
+      
+      gameQuestions = shuffledQuestions.map(q => {
+        const correctAnswerText = q.options[q.correct];
+        const shuffledOptions = shuffle(q.options);
+        return {
+          quote: q.quote,
+          options: shuffledOptions,
+          correct: shuffledOptions.indexOf(correctAnswerText)
+        };
+      });
+
       currentQuestion = 0;
       score = 0;
 
